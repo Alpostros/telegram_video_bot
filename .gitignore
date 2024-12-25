@@ -1,0 +1,6 @@
+authorized_users.json
+config.json
+subscribed_users.json
+unauthorized_attempts.log
+videos/
+video_env/
