@@ -145,6 +145,7 @@ def record_video(duration):
                 "--codec", "h264",
                 "--width", "1280",
                 "--height", "720",
+                "--rotation", "180",
                 "-o", raw_path
             ],
             check=True,
