@@ -8,7 +8,6 @@ import signal
 import sys
 import time
 
-# Fixed paths relative to the project root
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 CONFIG_FILE = os.path.join(PROJECT_ROOT, "config.json")
 AUTHORIZED_USERS_FILE = os.path.join(PROJECT_ROOT, "authorized_users.json")
@@ -17,10 +16,8 @@ VIDEO_DIR = os.path.join(PROJECT_ROOT, "videos")
 RAW_VIDEO_DIR = os.path.join(VIDEO_DIR, "raw")
 CONVERTED_VIDEO_DIR = os.path.join(VIDEO_DIR, "converted")
 
-# Meal times (in HH:MM format)
 MEAL_TIMES = ["00:50", "09:00", "13:00", "17:00", "21:00", "23:00"]
 
-# Ensure video directories exist
 os.makedirs(RAW_VIDEO_DIR, exist_ok=True)
 os.makedirs(CONVERTED_VIDEO_DIR, exist_ok=True)
 
@@ -39,17 +36,14 @@ else:
     SUBSCRIBED_USERS = []
 
 def save_authorized_users():
-    """Save authorized users to a JSON file."""
     with open(AUTHORIZED_USERS_FILE, "w") as file:
         json.dump(AUTHORIZED_USERS, file)
 
 def save_subscribed_users():
-    """Save subscribed users to a JSON file."""
     with open(SUBSCRIBED_USERS_FILE, "w") as file:
         json.dump(SUBSCRIBED_USERS, file)
 
 def load_config():
-    """Load the bot token and secret key from the configuration file."""
     if not os.path.exists(CONFIG_FILE):
         raise FileNotFoundError(f"Config file not found: {CONFIG_FILE}")
     with open(CONFIG_FILE, "r") as file:
@@ -58,28 +52,22 @@ def load_config():
             raise ValueError("Config file must contain 'bot_token' and 'secret_key'.")
         return config["bot_token"], config["secret_key"]
 
-# Load bot configuration
 bot_token, secret_key = load_config()
 
-# Initialize bot
 bot = telebot.TeleBot(bot_token)
 
 def log(message):
-    """Log a message with a timestamp."""
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {message}")
 
 def is_authorized(chat_id):
-    """Check if a user is authorized."""
     return chat_id in AUTHORIZED_USERS
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    """Handle the /start command."""
     bot.reply_to(message, "Welcome! Use /authorize <password> to gain access.")
 
 @bot.message_handler(commands=['authorize'])
 def authorize(message):
-    """Handle the /authorize command."""
     try:
         password = message.text.split()[1]
         if password == secret_key:
@@ -98,7 +86,6 @@ def authorize(message):
         bot.reply_to(message, "Usage: /authorize <password>")
 
 def send_available_commands(chat_id):
-    """Send the list of available commands to the user."""
     commands = [
         "/getvideo - Send a 30-second video",
         "/subscribe - Subscribe to meal-time videos",
@@ -110,7 +97,6 @@ def send_available_commands(chat_id):
 
 @bot.message_handler(commands=['getvideo'])
 def get_video(message):
-    """Handle the /getvideo command."""
     if not is_authorized(message.chat.id):
         bot.reply_to(message, "Unauthorized. Use /authorize <password>.")
         return
@@ -127,7 +113,6 @@ def get_video(message):
 
 @bot.message_handler(commands=['subscribe'])
 def subscribe(message):
-    """Handle the /subscribe command."""
     if not is_authorized(message.chat.id):
         bot.reply_to(message, "Unauthorized. Use /authorize <password>.")
         return
@@ -141,7 +126,6 @@ def subscribe(message):
 
 @bot.message_handler(commands=['unsubscribe'])
 def unsubscribe(message):
-    """Handle the /unsubscribe command."""
     if message.chat.id in SUBSCRIBED_USERS:
         SUBSCRIBED_USERS.remove(message.chat.id)
         save_subscribed_users()
@@ -151,7 +135,6 @@ def unsubscribe(message):
         bot.reply_to(message, "You are not subscribed.")
 
 def record_video(duration):
-    """Record a video of specified duration at 1280x720 resolution."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     raw_path = os.path.join(RAW_VIDEO_DIR, f"raw_video_{timestamp}.h264")
     try:
@@ -175,7 +158,6 @@ def record_video(duration):
     return raw_path
 
 def convert_video(raw_video_path):
-    """Convert raw video to MP4 format and delete the raw video after conversion."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     converted_path = os.path.join(CONVERTED_VIDEO_DIR, f"video_{timestamp}.mp4")
     try:
@@ -202,7 +184,6 @@ def convert_video(raw_video_path):
     return converted_path
 
 def cleanup_old_videos():
-    """Delete videos older than 2 days."""
     now = datetime.now()
     for file in os.listdir(CONVERTED_VIDEO_DIR):
         file_path = os.path.join(CONVERTED_VIDEO_DIR, file)
@@ -213,7 +194,6 @@ def cleanup_old_videos():
                 log(f"Deleted old video: {file_path}")
 
 def send_scheduled_videos():
-    """Send videos at meal times."""
     while True:
         cleanup_old_videos()
         now = datetime.now().strftime("%H:%M")
@@ -232,14 +212,12 @@ def send_scheduled_videos():
         time.sleep(1)
 
 def shutdown(signal, frame):
-    """Gracefully shut down the bot."""
     log("Shutting down bot...")
     sys.exit(0)
 
 signal.signal(signal.SIGINT, shutdown)
 signal.signal(signal.SIGTERM, shutdown)
 
-# Set command hints for Telegram
 bot.set_my_commands([
     telebot.types.BotCommand("getvideo", "Send a 30-second video"),
     telebot.types.BotCommand("subscribe", "Subscribe to meal-time videos"),
@@ -248,9 +226,7 @@ bot.set_my_commands([
     telebot.types.BotCommand("start", "Start and see the welcome message"),
 ])
 
-# Start the scheduled video thread
 threading.Thread(target=send_scheduled_videos, daemon=True).start()
 
-# Start the bot
 log("Bot is running. Waiting for commands...")
 bot.polling()
