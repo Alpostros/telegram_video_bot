@@ -82,7 +82,7 @@ Create a `config.json` file in the project root:
 
 ### 1. Run the Bot
 ```bash
-python3 send_video.py
+python3 video_bot.py
 ```
 
 ### 2. Start the Bot on System Boot (Optional)
@@ -101,7 +101,7 @@ You can create a systemd service to start the bot automatically.
 
    [Service]
    WorkingDirectory=/path/to/your/project
-   ExecStart=/usr/bin/python3 send_video.py
+   ExecStart=/usr/bin/python3 video_bot.py
    Restart=always
    User=pi
 
@@ -135,7 +135,7 @@ Videos are recorded and sent at the following times:
 ### Logs
 All logs are printed to the console with timestamps. Use a logging tool or redirect output to a file for persistent logs:
 ```bash
-python3 send_video.py > bot.log 2>&1 &
+python3 video_bot.py > bot.log 2>&1 &
 ```
 
 ---
@@ -151,7 +151,7 @@ python3 send_video.py > bot.log 2>&1 &
 ├── videos/                      # Video storage directory
 │   ├── raw/                     # Raw .h264 videos
 │   └── converted/               # Converted .mp4 videos
-├── send_video.py                # Main bot script
+├── video_bot.py                # Main bot script
 └── README.md                    # Project documentation
 ```
 
